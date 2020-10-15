@@ -770,6 +770,7 @@ void bb_destroy(void *userdata)
 int bb_access(const char *path, int mask)
 {
     int retstat = 0;
+    /*
     char fpath[PATH_MAX];
    
     log_msg("\nbb_access(path=\"%s\", mask=0%o)\n",
@@ -780,6 +781,7 @@ int bb_access(const char *path, int mask)
     
     if (retstat < 0)
 	retstat = log_error("bb_access access");
+    */
     
     return retstat;
 }
