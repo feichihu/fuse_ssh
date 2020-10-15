@@ -330,7 +330,7 @@ int bb_open(const char *path, struct fuse_file_info *fi)
         log_msg("fetch from server\n");
         //bring a local copy
         char cmd[PATH_MAX];
-        sprintf(cmd, "scp sea-cucumber:~/filesys/%s %s", path, fpath);
+        sprintf(cmd, "scp sea-cucumber:~/filesys%s %s", path, fpath);
         retstat = system(cmd);
         if (retstat!=0){
             log_msg("fetch failure\n");
@@ -488,7 +488,7 @@ int bb_release(const char *path, struct fuse_file_info *fi)
     char fpath[PATH_MAX];
     char cmd[PATH_MAX];
     bb_fullpath(fpath, path);
-    sprintf(cmd,"scp %s sea-cucumber:%s", fpath, path);
+    sprintf(cmd,"scp %s sea-cucumber:~/filesys%s", fpath, path);
     system(cmd);
     return ret;
 }
@@ -954,7 +954,7 @@ int main(int argc, char *argv[])
 
     // Pull the rootdir out of the argument list and save it in my
     // internal data
-    bb_data->rootdir = "~/filesys";
+    bb_data->rootdir = "/tmp/filesys";
     
     bb_data->logfile = log_open();
     
