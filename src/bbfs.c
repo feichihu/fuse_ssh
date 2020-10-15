@@ -325,7 +325,7 @@ int bb_open(const char *path, struct fuse_file_info *fi)
 	    path, fi);
     bb_fullpath(fpath, path);
     //check cache existence
-    if (access(path, F_OK)==-1){
+    if (access(fpath, F_OK)==-1){
         //bring a local copy
         char cmd[PATH_MAX];
         sprintf(cmd, "scp sea-cucumber:~/filesys/%s %s", path, fpath);
