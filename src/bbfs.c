@@ -324,13 +324,16 @@ int bb_open(const char *path, struct fuse_file_info *fi)
     log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
     bb_fullpath(fpath, path);
+    log_msg("fpath=%s\n", fpath);
     //check cache existence
     if (access(fpath, F_OK)==-1){
+        log_msg("fetch from server\n");
         //bring a local copy
         char cmd[PATH_MAX];
         sprintf(cmd, "scp sea-cucumber:~/filesys/%s %s", path, fpath);
         retstat = system(cmd);
         if (retstat!=0){
+            log_msg("fetch failure\n");
             return -1;
         }
     }
