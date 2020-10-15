@@ -63,6 +63,32 @@ static void bb_fullpath(char fpath[PATH_MAX], const char *path)
 // Prototypes for all these functions, and the C-style comments,
 // come from /usr/include/fuse.h
 //
+
+int bb_parser (char *path,struct stat *sb){
+	FILE* file = fopen(path, "r");
+	if (file==NULL) {
+		perror("fopen");
+		return -1;
+	}
+	
+	sb->st_dev = 0;
+	sb->st_ino = 0;
+	sb->st_nlink = 1;
+	int ret = fscanf(file, "%lo", &(sb->st_mode));
+    if (ret==EOF || ret <1){//error ops
+        return -1;
+    }
+	sb->st_uid = getuid();
+	sb->st_gid = getgid();
+	fscanf(file, "%ld", &(sb->st_blksize));
+	fscanf(file, "%lld", &(sb->st_size));
+	fscanf(file, "%lld", &(sb->st_blocks));
+	fclose (file);
+    //clear file content
+	file = fopen(path, "w");
+	fclose (file);
+    return 0;
+}
 /** Get file attributes.
  *
  * Similar to stat().  The 'st_dev' and 'st_blksize' fields are
@@ -76,12 +102,12 @@ int bb_getattr(const char *path, struct stat *statbuf)
     
     log_msg("\nbb_getattr(path=\"%s\", statbuf=0x%08x)\n",
 	  path, statbuf);
-    bb_fullpath(fpath, path);
-
-    retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
-    
+    char cmd[PATH_MAX];
+    sprintf(cmd, "ssh sea-cucumber '~/filesys/p ~/filesys/%s'", path);
+    system(cmd);
+    retstat = bb_parser("/tmp/filesys/filestat", statbuf);
+   // retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
     log_stat(statbuf);
-    
     return retstat;
 }
 
@@ -298,6 +324,17 @@ int bb_open(const char *path, struct fuse_file_info *fi)
     log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
     bb_fullpath(fpath, path);
+    //check cache existence
+    if (access(path, F_OK)==-1){
+        //bring a local copy
+        char cmd[PATH_MAX];
+        sprintf(cmd, "scp sea-cucumber:~/filesys/%s %s", path, fpath);
+        retstat = system(cmd);
+        if (retstat!=0){
+            return -1;
+        }
+    }
+
     
     // if the open call succeeds, my retstat is the file descriptor,
     // else it's -errno.  I'm making sure that in that case the saved
@@ -444,7 +481,11 @@ int bb_release(const char *path, struct fuse_file_info *fi)
 
     // We need to close the file.  Had we allocated any resources
     // (buffers etc) we'd need to free them here as well.
-    return log_syscall("close", close(fi->fh), 0);
+    int ret = log_syscall("close", close(fi->fh), 0);
+    char fpath[PATH_MAX];
+    bb_fullpath(fpath, path);
+    system("scp %s sea-cucumber:%s", fpath, path);
+    return ret;
 }
 
 /** Synchronize file contents
@@ -864,7 +905,7 @@ struct fuse_operations bb_oper = {
 
 void bb_usage()
 {
-    fprintf(stderr, "usage:  bbfs [FUSE and mount options] rootDir mountPoint\n");
+    fprintf(stderr, "usage:  bbfs [FUSE and mount options] mountPoint\n");
     abort();
 }
 
@@ -883,7 +924,7 @@ int main(int argc, char *argv[])
     // user doing it with the allow_other flag is still there because
     // I don't want to parse the options string.
     if ((getuid() == 0) || (geteuid() == 0)) {
-    	fprintf(stderr, "Running BBFS as root opens unnacceptable security holes\n");
+    	fprintf(stderr, "Running SSHBBFS as root opens unnacceptable security holes\n");
     	return 1;
     }
 
@@ -895,7 +936,7 @@ int main(int argc, char *argv[])
     // start with a hyphen (this will break if you actually have a
     // rootpoint or mountpoint whose name starts with a hyphen, but so
     // will a zillion other programs)
-    if ((argc < 3) || (argv[argc-2][0] == '-') || (argv[argc-1][0] == '-'))
+    if ((argc < 2) || (argv[argc-1][0] == '-'))
 	bb_usage();
 
     bb_data = malloc(sizeof(struct bb_state));
@@ -906,10 +947,7 @@ int main(int argc, char *argv[])
 
     // Pull the rootdir out of the argument list and save it in my
     // internal data
-    bb_data->rootdir = realpath(argv[argc-2], NULL);
-    argv[argc-2] = argv[argc-1];
-    argv[argc-1] = NULL;
-    argc--;
+    bb_data->rootdir = realpath("/tmp/filesys", NULL);
     
     bb_data->logfile = log_open();
     
