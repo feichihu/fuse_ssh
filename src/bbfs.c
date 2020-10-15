@@ -485,7 +485,7 @@ int bb_release(const char *path, struct fuse_file_info *fi)
     char fpath[PATH_MAX];
     char cmd[PATH_MAX];
     bb_fullpath(fpath, path);
-    sprintf(cmd,"scp %s sea-cucumber:%s", fpath, path)
+    sprintf(cmd,"scp %s sea-cucumber:%s", fpath, path);
     system(cmd);
     return ret;
 }
