@@ -483,8 +483,10 @@ int bb_release(const char *path, struct fuse_file_info *fi)
     // (buffers etc) we'd need to free them here as well.
     int ret = log_syscall("close", close(fi->fh), 0);
     char fpath[PATH_MAX];
+    char cmd[PATH_MAX];
     bb_fullpath(fpath, path);
-    system("scp %s sea-cucumber:%s", fpath, path);
+    sprintf(cmd,"scp %s sea-cucumber:%s", fpath, path)
+    system(cmd);
     return ret;
 }
 
