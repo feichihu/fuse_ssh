@@ -105,7 +105,7 @@ int bb_getattr(const char *path, struct stat *statbuf)
     char cmd[PATH_MAX];
     sprintf(cmd, "ssh sea-cucumber '~/filesys/p ~/filesys/%s' >/tmp/fileinfo", path);
     system(cmd);
-    retstat = bb_parser("/tmp/filesys/filestat", statbuf);
+    retstat = bb_parser("/tmp/fileinfo", statbuf);
    // retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
     log_stat(statbuf);
     return retstat;
