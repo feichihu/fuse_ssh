@@ -954,7 +954,7 @@ int main(int argc, char *argv[])
 
     // Pull the rootdir out of the argument list and save it in my
     // internal data
-    bb_data->rootdir = realpath("/tmp/filesys", NULL);
+    bb_data->rootdir = "~/filesys";
     
     bb_data->logfile = log_open();
     
